@@ -1,0 +1,11 @@
+{
+  "name": "talks-kcdc-2025-write-once-stream-everywhere",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.14.0",
+  "license": "MIT",
+  "scripts": {
+    "demo": "pnpm run --filter demo dev",
+    "slides": "pnpm run --filter slides dev"
+  }
+}
