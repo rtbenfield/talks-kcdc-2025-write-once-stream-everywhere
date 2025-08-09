@@ -1,12 +1,17 @@
 -- // REVIEW: 4. Database schema for demo application
 
-CREATE TABLE IF NOT EXISTS "carts" (
+DROP TABLE IF EXISTS "order_items";
+DROP TABLE IF EXISTS "orders";
+DROP TABLE IF EXISTS "cart_items";
+DROP TABLE IF EXISTS "carts";
+
+CREATE TABLE "carts" (
   "id" SERIAL PRIMARY KEY,
   "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS "cart_items" (
+CREATE TABLE "cart_items" (
   "id" SERIAL PRIMARY KEY,
   "cart_id" INTEGER REFERENCES carts(id) ON DELETE CASCADE,
   "product_id" INTEGER NOT NULL,
@@ -15,13 +20,13 @@ CREATE TABLE IF NOT EXISTS "cart_items" (
   UNIQUE("cart_id", "product_id")
 );
 
-CREATE TABLE IF NOT EXISTS "orders" (
+CREATE TABLE "orders" (
   "id" SERIAL PRIMARY KEY,
   "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS "order_items" (
+CREATE TABLE "order_items" (
   "id" SERIAL PRIMARY KEY,
   "order_id" INTEGER REFERENCES orders(id) ON DELETE CASCADE,
   "product_id" INTEGER NOT NULL,

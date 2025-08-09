@@ -5,6 +5,7 @@
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev",
+    "db:seed": "tsx ./database/seed.ts",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc"
   },
@@ -25,6 +26,7 @@
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.7",
     "tailwindcss": "^4.1.11",
+    "tsx": "^4.20.3",
     "typescript": "^5.9.2",
     "vite": "^6.3.5",
     "vite-tsconfig-paths": "^5.1.4"
