@@ -1,6 +1,6 @@
-import { data, Link, useLoaderData } from "react-router";
+import { data, Link, redirect, useLoaderData } from "react-router";
 import productsData from "../data/products.json";
-import { getCartWithItems } from "../lib/cart.server";
+import { addItemToCart, getCartWithItems } from "../lib/cart.server";
 import {
   getCartIdFromSession,
   setCartIdInSession,
@@ -16,6 +16,27 @@ export function meta({}: Route.MetaArgs) {
     { title: "Products | E-Commerce Demo" },
     { name: "description", content: "Browse our products" },
   ];
+}
+
+export async function action({ request }: Route.ActionArgs) {
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+  const headers = new Headers();
+
+  if (intent === "add") {
+    const productId = Number(formData.get("productId"));
+
+    // Get cart ID from session
+    const cartId = await getCartIdFromSession(request);
+
+    // Add item to cart and get the cart ID
+    const newCartId = await addItemToCart(cartId, productId);
+
+    // Set cookie header for the redirect
+    headers.set("Set-Cookie", await setCartIdInSession(request, newCartId));
+  }
+
+  return redirect("/products", { headers });
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -83,7 +104,7 @@ export default function Products() {
               <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
                 ${product.price.toFixed(2)}
               </span>
-              <form method="post" action="/cart">
+              <form method="post">
                 <input type="hidden" name="productId" value={product.id} />
                 <input type="hidden" name="intent" value="add" />
                 {productsInCart.includes(product.id) ? (

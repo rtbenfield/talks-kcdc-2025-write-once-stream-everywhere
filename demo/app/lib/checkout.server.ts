@@ -41,7 +41,7 @@ export async function performCheckout(cartId: number) {
     }
 
     // Clear the cart items
-    await tx`DELETE FROM cart_items WHERE cart_id = ${cartId}`;
+    await tx`DELETE FROM carts WHERE id = ${cartId}`;
 
     return { orderId };
   });
