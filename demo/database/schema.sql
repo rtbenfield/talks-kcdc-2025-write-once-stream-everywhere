@@ -1,4 +1,4 @@
--- // REVIEW: database schema for demo application
+-- // REVIEW: 4. Database schema for demo application
 
 CREATE TABLE IF NOT EXISTS "carts" (
   "id" SERIAL PRIMARY KEY,

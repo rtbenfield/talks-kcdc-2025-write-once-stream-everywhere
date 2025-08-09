@@ -52,7 +52,7 @@ export async function loader({}: LoaderFunctionArgs) {
  * Endpoint to receive and log data from Debezium.
  */
 export async function action({ request }: ActionFunctionArgs) {
-  // REVIEW: endpoint to receive Debezium events
+  // REVIEW: 5. Debezium endpoint
   const data: DebeziumEvent = await request.json();
 
   console.info(
@@ -63,7 +63,7 @@ export async function action({ request }: ActionFunctionArgs) {
   );
 
   try {
-    // TODO: enable Debezium event handling
+    // TODO: 2. enable Debezium event handling
     // await eventRouter(data);
   } catch (error) {
     // simplify the error message to reduce the noisy logs

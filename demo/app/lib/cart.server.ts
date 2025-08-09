@@ -118,7 +118,7 @@ export async function addItemToCart(cartId: MaybeCartId, productId: number) {
 
   if (ENABLE_SIDE_EFFECTS) {
     // schedule an abandoned cart email for this cart if the user does not check out
-    // FIXME: what happens if scheduling the email fails?
+    // FIXME: 1. what happens if scheduling the email fails?
     await scheduledAbandonedCartEmail(cart.id);
   }
 
@@ -158,7 +158,7 @@ export async function addMultipleItemsToCart(
     ON CONFLICT (cart_id, product_id) DO NOTHING
   `;
 
-  // FIXME: we forgot side effects here
+  // FIXME: 99. we forgot side effects here
 
   return cart.id;
 }
