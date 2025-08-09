@@ -1,10 +1,12 @@
+import { randomChance } from "./random";
+
 export async function sendOrderConfirmationEmail(
   orderId: number,
   idempotentId?: string,
 ) {
   // this function mocks an order confirmation email sending
   // unfortunately we're using an unreliable email provider that fails 25% of the time
-  const success = Math.random() > 0.25;
+  const success = randomChance(0.25);
 
   if (!success) {
     throw new EmailProviderError("Failed to send email");
@@ -22,7 +24,7 @@ export async function cancelAbandonedCartEmail(
   // it would call to a third party service that managed the email schedule
 
   // unfortunately, our third party is unreliable, and fails 25% of the time
-  const success = Math.random() > 0.25;
+  const success = randomChance(0.25);
 
   if (!success) {
     throw new EmailProviderError("Failed to cancel email");
@@ -39,7 +41,7 @@ export async function scheduledAbandonedCartEmail(
   // imagine we call to a third party service to schedule the email for 2-days from now
 
   // unfortunately, our third party is unreliable, and fails 25% of the time
-  const success = Math.random() > 0.25;
+  const success = randomChance(0.25);
 
   if (!success) {
     throw new EmailProviderError("Failed to schedule email");

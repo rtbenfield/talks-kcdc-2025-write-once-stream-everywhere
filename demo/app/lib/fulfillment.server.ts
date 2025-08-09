@@ -1,3 +1,5 @@
+import { randomChance } from "./random";
+
 export async function processOrderFulfillment(
   orderId: number,
   idempotentId?: string,
@@ -5,8 +7,8 @@ export async function processOrderFulfillment(
   // this function mocks the fulfillment of an order
   // imagine we call to another service to process the order
 
-  // unfortunately, our service is unreliable, and fails 25% of the time
-  const success = Math.random() > 0.25;
+  // unfortunately, our service is unreliable, and fails 30% of the time
+  const success = randomChance(0.3);
 
   if (!success) {
     throw new FulfillmentProviderError("Failed to fulfill order");
