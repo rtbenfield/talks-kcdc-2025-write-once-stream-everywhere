@@ -1190,7 +1190,7 @@ Debezium is a prebuilt solution for deploying change data capture in your applic
 
 - Pair with a message queue for durability and delivery to applications.
 
-- Free to host yourself.
+- Free to host yourself with Apache License 2.0.
 
 ::right::
 
