@@ -1,0 +1,156 @@
+import { Link, redirect, useLoaderData } from "react-router";
+import { sql } from "../lib/db.server";
+import { getOrCreateCart, getCartWithItems } from "../lib/cart.server";
+import type { Route } from "./+types/cart";
+
+export function meta({}: Route.MetaArgs) {
+  return [
+    { title: "Shopping Cart | E-Commerce Demo" },
+    { name: "description", content: "View your shopping cart" },
+  ];
+}
+
+export async function loader({}: Route.LoaderArgs) {
+  // Get the cart with all items and product details
+  const cart = await getCartWithItems();
+
+  return {
+    cartId: cart.id,
+    items: cart.items,
+    totalPrice: cart.totalPrice,
+  };
+}
+
+export async function action({ request }: Route.ActionArgs) {
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+
+  // Get or create cart
+  const cart = await getOrCreateCart();
+
+  if (intent === "add") {
+    const productId = Number(formData.get("productId"));
+
+    // Check if product already exists in cart
+    const existing = await sql`
+      SELECT * FROM cart_items 
+      WHERE cart_id = ${cart.id} AND product_id = ${productId}
+    `;
+
+    // If product doesn't exist in cart, add it
+    if (existing.length === 0) {
+      await sql`
+        INSERT INTO cart_items (cart_id, product_id)
+        VALUES (${cart.id}, ${productId})
+      `;
+    }
+
+    // Redirect back to products page or stay on cart page
+    const redirectTo = formData.get("redirectTo") || "/products";
+    return redirect(redirectTo.toString());
+  }
+
+  if (intent === "remove") {
+    const itemId = Number(formData.get("itemId"));
+
+    await sql`
+      DELETE FROM cart_items
+      WHERE id = ${itemId} AND cart_id = ${cart.id}
+    `;
+
+    return redirect("/cart");
+  }
+
+  return redirect("/cart");
+}
+
+// Using the utility function from cart.server.ts
+
+export default function Cart() {
+  const { items, totalPrice } = useLoaderData<typeof loader>();
+
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-gray-100">Your Cart</h1>
+
+      {items.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-4">Your cart is empty</p>
+          <Link
+            to="/products"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+          >
+            Browse Products
+          </Link>
+        </div>
+      ) : (
+        <>
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden mb-6">
+            <table className="w-full">
+              <thead className="bg-gray-100 dark:bg-gray-800">
+                <tr>
+                  <th className="text-left p-4 text-gray-900 dark:text-gray-100">Product</th>
+                  <th className="text-right p-4 text-gray-900 dark:text-gray-100">Price</th>
+                  <th className="text-right p-4 text-gray-900 dark:text-gray-100">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item) => (
+                  <tr key={item.id} className="border-t border-gray-200 dark:border-gray-700">
+                    <td className="p-4">
+                      <div>
+                        <h3 className="font-medium text-gray-900 dark:text-gray-100">{item.product.name}</h3>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm">
+                          {item.product.description}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="p-4 text-right text-gray-900 dark:text-gray-100">
+                      ${item.product.price.toFixed(2)}
+                    </td>
+                    <td className="p-4 text-right">
+                      <form method="post">
+                        <input type="hidden" name="itemId" value={item.id} />
+                        <input type="hidden" name="intent" value="remove" />
+                        <button
+                          type="submit"
+                          className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                        >
+                          Remove
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot className="bg-gray-50 dark:bg-gray-800">
+                <tr>
+                  <td className="p-4 font-bold text-gray-900 dark:text-gray-100">Total</td>
+                  <td className="p-4 text-right font-bold text-gray-900 dark:text-gray-100">
+                    ${totalPrice.toFixed(2)}
+                  </td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <div className="flex justify-between">
+            <Link
+              to="/products"
+              className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 px-4 py-2 rounded"
+            >
+              Continue Shopping
+            </Link>
+            <Link
+              to="/checkout"
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+            >
+              Proceed to Checkout
+            </Link>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
