@@ -6,6 +6,7 @@ import {
   cancelAbandonedCartEmail,
   sendOrderConfirmationEmail,
 } from "./emails.server";
+import { processOrderFulfillment } from "./fulfillment.server";
 
 /**
  * Performs a checkout by creating an order and clearing the cart.
@@ -46,11 +47,14 @@ export async function performCheckout(cartId: number) {
   });
 
   if (ENABLE_SIDE_EFFECTS) {
-    // FIXME: what happens to our checkout if the email fails?
+    // FIXME: what happens if side effects in checkout fail?
+    // what about Promise.all?
+    // what about Promise.allSettled?
+    // what about retries?
+    // what about in-memory jobs?
     await sendOrderConfirmationEmail(orderId);
-
-    // FIXME: what happens if email cancelation fails?
     await cancelAbandonedCartEmail(cartId);
+    await processOrderFulfillment(orderId);
   }
 
   return { orderId };

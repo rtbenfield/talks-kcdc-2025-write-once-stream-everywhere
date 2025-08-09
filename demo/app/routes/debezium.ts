@@ -4,6 +4,7 @@ import {
   scheduledAbandonedCartEmail,
   sendOrderConfirmationEmail,
 } from "~/lib/emails.server";
+import { processOrderFulfillment } from "~/lib/fulfillment.server";
 
 interface DebeziumEvent {
   /**
@@ -98,9 +99,14 @@ async function eventRouter(event: DebeziumEvent) {
       switch (event.payload.op) {
         case "c":
           // order was created
-          // send an order confirmation email
           const orderId = event.payload.after!["id"] as number;
-          await sendOrderConfirmationEmail(orderId, idempotentId);
+          //! these must be idempotent!
+          await Promise.all([
+            // send an order confirmation email
+            sendOrderConfirmationEmail(orderId, idempotentId),
+            // process the order fulfillment
+            processOrderFulfillment(orderId, idempotentId),
+          ]);
           return;
       }
   }
