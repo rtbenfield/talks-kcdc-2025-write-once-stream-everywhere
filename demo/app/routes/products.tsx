@@ -1,4 +1,5 @@
-import { data, Link, redirect, useLoaderData } from "react-router";
+import { data, Form, Link, redirect, useLoaderData } from "react-router";
+import { currency } from "~/lib/formatters";
 import productsData from "../data/products.json";
 import {
   addItemToCart,
@@ -102,7 +103,7 @@ export default function Products() {
   const allBundleItemsInCart = BUNDLE_PRODUCT_IDS.every((id) =>
     productsInCart.includes(id),
   );
-  
+
   // Count how many bundle items are already in cart
   const bundleItemsInCartCount = BUNDLE_PRODUCT_IDS.filter((id) =>
     productsInCart.includes(id),
@@ -130,67 +131,71 @@ export default function Products() {
       {/* Suggested Bundle Section - only show if not all items are in cart */}
       {!allBundleItemsInCart && (
         <div className="mb-10 p-6 border-2 border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50 dark:bg-blue-900/30">
-        <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
-          Suggested Bundle: Workstation Essentials
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          {bundleProducts.map((product) => (
-            <div
-              key={product.id}
-              className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm bg-white dark:bg-gray-800"
-            >
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                {product.name}
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">
-                {product.description}
-              </p>
-              <div className="mt-4">
-                <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                  ${product.price.toFixed(2)}
-                </span>
-                {productsInCart.includes(product.id) && (
-                  <span className="ml-3 text-sm bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 px-2 py-1 rounded">
-                    In Cart
+          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
+            Suggested Bundle: Workstation Essentials
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            {bundleProducts.map((product) => (
+              <div
+                key={product.id}
+                className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm bg-white dark:bg-gray-800"
+              >
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                  {product.name}
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mt-2">
+                  {product.description}
+                </p>
+                <div className="mt-4">
+                  <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                    {currency.format(product.price)}
                   </span>
-                )}
+                  {productsInCart.includes(product.id) && (
+                    <span className="ml-3 text-sm bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 px-2 py-1 rounded">
+                      In Cart
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-        <div className="flex flex-col md:flex-row justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-          <div>
-            <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Bundle Price:{" "}
-              <span className="text-xl">${bundleTotalPrice.toFixed(2)}</span>
-            </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Get all three items for your perfect workstation setup!
-            </p>
+            ))}
           </div>
-          <form method="post" className="mt-4 md:mt-0">
-            <input
-              type="hidden"
-              name="bundleItems"
-              value={BUNDLE_PRODUCT_IDS.join(",")}
-            />
-            <input type="hidden" name="intent" value="add-bundle" />
-            <button
-              type="submit"
-              disabled={allBundleItemsInCart}
-              className={`px-6 py-2 rounded-lg font-medium ${
-                allBundleItemsInCart
-                  ? "bg-gray-400 cursor-not-allowed text-white"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
-              }`}
-            >
-              {bundleItemsInCartCount > 0
-                ? `Add ${BUNDLE_PRODUCT_IDS.length - bundleItemsInCartCount} Remaining Items`
-                : "Add Bundle to Cart"}
-            </button>
-          </form>
+          <div className="flex flex-col md:flex-row justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+            <div>
+              <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Bundle Price:{" "}
+                <span className="text-xl">
+                  {currency.format(bundleTotalPrice)}
+                </span>
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Get all three items for your perfect workstation setup!
+              </p>
+            </div>
+            <Form method="post" className="mt-4 md:mt-0">
+              <input
+                type="hidden"
+                name="bundleItems"
+                value={BUNDLE_PRODUCT_IDS.join(",")}
+              />
+              <input type="hidden" name="intent" value="add-bundle" />
+              <button
+                type="submit"
+                disabled={allBundleItemsInCart}
+                className={`px-6 py-2 rounded-lg font-medium ${
+                  allBundleItemsInCart
+                    ? "bg-gray-400 cursor-not-allowed text-white"
+                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                }`}
+              >
+                {bundleItemsInCartCount > 0
+                  ? `Add ${
+                      BUNDLE_PRODUCT_IDS.length - bundleItemsInCartCount
+                    } Remaining Items`
+                  : "Add Bundle to Cart"}
+              </button>
+            </Form>
+          </div>
         </div>
-      </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -207,9 +212,9 @@ export default function Products() {
             </p>
             <div className="mt-4 flex justify-between items-center">
               <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                ${product.price.toFixed(2)}
+                {currency.format(product.price)}
               </span>
-              <form method="post">
+              <Form method="post">
                 <input type="hidden" name="productId" value={product.id} />
                 <input type="hidden" name="intent" value="add" />
                 {productsInCart.includes(product.id) ? (
@@ -228,7 +233,7 @@ export default function Products() {
                     Add to Cart
                   </button>
                 )}
-              </form>
+              </Form>
             </div>
           </div>
         ))}

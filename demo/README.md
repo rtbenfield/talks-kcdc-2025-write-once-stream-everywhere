@@ -1,87 +1,63 @@
-# Welcome to React Router!
+# Write Once: Stream Everywhere
 
-A modern, production-ready template for building full-stack React applications using React Router.
+This example app is meant to accompany the talk _Write Once: Stream Everywhere: Transforming Your Data Into Events_ at KCDC 2025.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+The app is a simple e-commerce example that demonstrates the value of event-driven architecture using Change Data Capture. It's built with TypeScript, React Router 7, Postgres, and Debezium. Most of the code was completed by our robotic friends.
 
-## Features
-
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+The app contains a Docker Compose configuration for starting a local Postgres database and Debezium server. If you're not using Docker, you can substitute these containers with your own instances.
 
 ## Getting Started
 
-### Installation
+### Prerequisites
+
+- Node.js v22
+- pnpm v10
+- Docker
+
+### Setup
 
 Install the dependencies:
 
 ```bash
-npm install
+pnpm install
+```
+
+Start the accompanying Postgres and Debezium containers:
+
+```bash
+docker compose up -d
+```
+
+Seed the database:
+
+```bash
+pnpm run db:seed
 ```
 
 ### Development
 
-Start the development server with HMR:
+Start the React Router development server:
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 Your application will be available at `http://localhost:5173`.
 
-## Building for Production
+If you used the Docker Compose file, your Postgres database will be available at `localhost:5432`. Debezium will be connected to the Postgres database and will stream changes to the application.
 
-Create a production build:
+## Exercise Concepts
 
-```bash
-npm run build
-```
+There are three tags used as comments in the code to navigate the exercise.
 
-## Deployment
+- `REVIEW` denotes setup code that we'll stop to explain before getting to the details.
+- `FIXME` denotes code that can be problematic. We're going to fix that!
+- `TODO` denotes larger steps to move through the exercise, such as enabling side effects or Debezium event handling.
 
-### Docker Deployment
+Each of these tags is followed by a number that indicates the order in which to complete them. I'll be using the [Todo Tree](https://marketplace.visualstudio.com/items?itemName=Gruntfuggly.todo-tree) extension during the demo to navigate this way.
 
-To build and run using Docker:
+### Focus Areas
 
-```bash
-docker build -t my-app .
+This isn't a React Router demo. We're not going to focus on the UI, routing, form handling, or any of that.
 
-# Run the container
-docker run -p 3000:3000 my-app
-```
-
-The containerized application can be deployed to any platform that supports Docker, including:
-
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
-
----
-
-Built with ❤️ using React Router.
+We'll be focusing on the behavior, architecture, and how to take advantage of Change Data Capture to build event-driven applications.

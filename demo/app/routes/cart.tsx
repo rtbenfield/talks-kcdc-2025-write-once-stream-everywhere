@@ -1,4 +1,4 @@
-import { data, Link, redirect, useLoaderData } from "react-router";
+import { data, Form, Link, redirect, useLoaderData } from "react-router";
 import { currency } from "~/lib/formatters";
 import { getCartWithItems, removeItemFromCart } from "../lib/cart.server";
 import {
@@ -134,7 +134,7 @@ export default function Cart() {
                       {currency.format(item.product.price)}
                     </td>
                     <td className="p-4 text-right">
-                      <form method="post">
+                      <Form method="post">
                         <input type="hidden" name="itemId" value={item.id} />
                         <input type="hidden" name="intent" value="remove" />
                         <button
@@ -143,7 +143,7 @@ export default function Cart() {
                         >
                           Remove
                         </button>
-                      </form>
+                      </Form>
                     </td>
                   </tr>
                 ))}

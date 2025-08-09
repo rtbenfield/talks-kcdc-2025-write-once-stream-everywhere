@@ -1,4 +1,4 @@
-import { data, Link, redirect, useLoaderData } from "react-router";
+import { data, Form, Link, redirect, useLoaderData } from "react-router";
 import { performCheckout } from "~/lib/checkout.server";
 import { currency } from "~/lib/formatters";
 import { getCartWithItems } from "../lib/cart.server";
@@ -136,7 +136,7 @@ export default function Checkout() {
             <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
               Complete Order
             </h2>
-            <form method="post">
+            <Form method="post">
               <input type="hidden" name="intent" value="complete" />
               <button
                 type="submit"
@@ -144,7 +144,7 @@ export default function Checkout() {
               >
                 Complete Purchase
               </button>
-            </form>
+            </Form>
 
             <div className="mt-4">
               <Link
