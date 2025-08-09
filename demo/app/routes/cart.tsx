@@ -1,6 +1,13 @@
-import { Link, redirect, useLoaderData } from "react-router";
-import { sql } from "../lib/db.server";
-import { getOrCreateCart, getCartWithItems } from "../lib/cart.server";
+import { data, Link, redirect, useLoaderData } from "react-router";
+import {
+  addItemToCart,
+  getCartWithItems,
+  removeItemFromCart,
+} from "../lib/cart.server";
+import {
+  getCartIdFromSession,
+  setCartIdInSession,
+} from "../lib/session.server";
 import type { Route } from "./+types/cart";
 
 export function meta({}: Route.MetaArgs) {
@@ -10,55 +17,73 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export async function loader({}: Route.LoaderArgs) {
-  // Get the cart with all items and product details
-  const cart = await getCartWithItems();
+export async function loader({ request }: Route.LoaderArgs) {
+  // Get cart ID from session or create a new cart
+  const cartId = await getCartIdFromSession(request);
+  const headers = new Headers();
 
-  return {
-    cartId: cart.id,
-    items: cart.items,
-    totalPrice: cart.totalPrice,
-  };
+  // Get the cart with all items and product details
+  const cart = await getCartWithItems(cartId);
+
+  // If we didn't have a cart ID or it changed, update the session
+  if (!cartId || cartId !== cart.id) {
+    headers.set("Set-Cookie", await setCartIdInSession(request, cart.id));
+  }
+
+  return data(
+    {
+      cartId: cart.id,
+      items: cart.items,
+      totalPrice: cart.totalPrice,
+    },
+    { headers },
+  );
 }
 
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
   const intent = formData.get("intent");
 
-  // Get or create cart
-  const cart = await getOrCreateCart();
+  const cartId = await getCartIdFromSession(request);
 
   if (intent === "add") {
     const productId = Number(formData.get("productId"));
 
-    // Check if product already exists in cart
-    const existing = await sql`
-      SELECT * FROM cart_items 
-      WHERE cart_id = ${cart.id} AND product_id = ${productId}
-    `;
+    // Add item to cart and get the cart ID
+    const newCartId = await addItemToCart(cartId, productId);
 
-    // If product doesn't exist in cart, add it
-    if (existing.length === 0) {
-      await sql`
-        INSERT INTO cart_items (cart_id, product_id)
-        VALUES (${cart.id}, ${productId})
-      `;
-    }
+    // Set cookie header for the redirect
+    const headers = {
+      "Set-Cookie": await setCartIdInSession(request, newCartId),
+    };
 
-    // Redirect back to products page or stay on cart page
-    const redirectTo = formData.get("redirectTo") || "/products";
-    return redirect(redirectTo.toString());
+    return redirect("/cart", { headers });
   }
 
   if (intent === "remove") {
-    const itemId = Number(formData.get("itemId"));
+    const itemId = formData.get("itemId");
 
-    await sql`
-      DELETE FROM cart_items
-      WHERE id = ${itemId} AND cart_id = ${cart.id}
-    `;
+    if (typeof itemId !== "string") {
+      return { error: "Invalid item ID" };
+    }
 
-    return redirect("/cart");
+    // Get cart ID from session
+    const cartId = await getCartIdFromSession(request);
+
+    if (!cartId) {
+      return redirect("/products");
+    }
+
+    // Remove the item from the cart
+    await removeItemFromCart(cartId, itemId);
+
+    // Set cookie header for the redirect
+    const headers = {
+      "Set-Cookie": await setCartIdInSession(request, cartId),
+    };
+
+    // Redirect back to the cart page
+    return redirect("/cart", { headers });
   }
 
   return redirect("/cart");
@@ -71,11 +96,15 @@ export default function Cart() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-gray-100">Your Cart</h1>
+      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-gray-100">
+        Your Cart
+      </h1>
 
       {items.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-4">Your cart is empty</p>
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-4">
+            Your cart is empty
+          </p>
           <Link
             to="/products"
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
@@ -89,17 +118,28 @@ export default function Cart() {
             <table className="w-full">
               <thead className="bg-gray-100 dark:bg-gray-800">
                 <tr>
-                  <th className="text-left p-4 text-gray-900 dark:text-gray-100">Product</th>
-                  <th className="text-right p-4 text-gray-900 dark:text-gray-100">Price</th>
-                  <th className="text-right p-4 text-gray-900 dark:text-gray-100">Actions</th>
+                  <th className="text-left p-4 text-gray-900 dark:text-gray-100">
+                    Product
+                  </th>
+                  <th className="text-right p-4 text-gray-900 dark:text-gray-100">
+                    Price
+                  </th>
+                  <th className="text-right p-4 text-gray-900 dark:text-gray-100">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((item) => (
-                  <tr key={item.id} className="border-t border-gray-200 dark:border-gray-700">
+                  <tr
+                    key={item.id}
+                    className="border-t border-gray-200 dark:border-gray-700"
+                  >
                     <td className="p-4">
                       <div>
-                        <h3 className="font-medium text-gray-900 dark:text-gray-100">{item.product.name}</h3>
+                        <h3 className="font-medium text-gray-900 dark:text-gray-100">
+                          {item.product.name}
+                        </h3>
                         <p className="text-gray-600 dark:text-gray-400 text-sm">
                           {item.product.description}
                         </p>
@@ -125,7 +165,9 @@ export default function Cart() {
               </tbody>
               <tfoot className="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <td className="p-4 font-bold text-gray-900 dark:text-gray-100">Total</td>
+                  <td className="p-4 font-bold text-gray-900 dark:text-gray-100">
+                    Total
+                  </td>
                   <td className="p-4 text-right font-bold text-gray-900 dark:text-gray-100">
                     ${totalPrice.toFixed(2)}
                   </td>

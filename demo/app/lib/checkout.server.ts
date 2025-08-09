@@ -2,12 +2,7 @@ import productsData from "../data/products.json";
 import type { Product } from "../types";
 import { sql } from "./db.server";
 
-export async function performCheckout() {
-  const cartId =
-    await sql`SELECT id FROM carts ORDER BY created_at DESC LIMIT 1`.then(
-      (row) => row[0].id,
-    );
-
+export async function performCheckout(cartId: number) {
   // Type assertion for our static JSON data
   const { products } = productsData satisfies { products: Product[] };
 

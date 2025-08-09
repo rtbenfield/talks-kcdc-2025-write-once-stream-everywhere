@@ -2,41 +2,49 @@ import productsData from "../data/products.json";
 import type { Cart, CartItem, Product } from "../types";
 import { sql } from "./db.server";
 
-/**
- * Gets or creates a cart and returns it
- */
-export async function getOrCreateCart() {
-  // Check if we have an existing cart
-  let carts = await sql`SELECT * FROM carts ORDER BY created_at DESC LIMIT 1`;
+type MaybeCartId = number | null | undefined;
 
-  // If no cart exists, create one
-  if (carts.length === 0) {
-    carts = await sql`INSERT INTO carts DEFAULT VALUES RETURNING *`;
+/**
+ * Gets a cart by ID or creates a new one if ID is not provided
+ */
+export async function getOrCreateCart(cartId: MaybeCartId) {
+  // If we have a cart ID, try to get that cart
+  if (cartId) {
+    const existingCart = await sql<
+      { id: number }[]
+    >`SELECT id FROM carts WHERE id = ${cartId}`;
+    if (existingCart.length > 0) {
+      return existingCart[0];
+    }
   }
 
-  return carts[0];
+  // If no cart found or no ID provided, create a new one
+  const [cart] = await sql<
+    { id: number }[]
+  >`INSERT INTO carts DEFAULT VALUES RETURNING id`;
+  return cart;
 }
 
 /**
  * Gets the current cart item count
  */
-export async function getCartItemCount() {
-  const cart = await getOrCreateCart();
+export async function getCartItemCount(cartId: MaybeCartId) {
+  const cart = await getOrCreateCart(cartId);
 
-  const result = await sql`
+  const [{ count }] = await sql<{ count: number }[]>`
     SELECT COUNT(*) as count
     FROM cart_items
     WHERE cart_id = ${cart.id}
   `;
 
-  return result[0]?.count || 0;
+  return count;
 }
 
 /**
  * Gets a list of product IDs currently in the cart
  */
-export async function getCartProductIds() {
-  const cart = await getOrCreateCart();
+export async function getCartProductIds(cartId: MaybeCartId) {
+  const cart = await getOrCreateCart(cartId);
 
   const items = await sql<{ product_id: number }[]>`
     SELECT product_id
@@ -50,9 +58,9 @@ export async function getCartProductIds() {
 /**
  * Gets the cart with all items and product details
  */
-export async function getCartWithItems(): Promise<Cart> {
+export async function getCartWithItems(cartId: MaybeCartId): Promise<Cart> {
   // Get the current cart
-  const cart = await getOrCreateCart();
+  const cart = await getOrCreateCart(cartId);
 
   // Get cart items
   const cartItems = await sql<{ id: number; product_id: number }[]>`
@@ -90,4 +98,33 @@ export async function getCartWithItems(): Promise<Cart> {
     items: itemsWithDetails,
     totalPrice,
   };
+}
+
+/**
+ * Adds an item to the cart or increments its quantity if it already exists
+ */
+export async function addItemToCart(cartId: MaybeCartId, productId: number) {
+  // Get or create a cart
+  const cart = await getOrCreateCart(cartId);
+
+  // Upsert the item into the cart
+  await sql`
+    INSERT INTO cart_items (cart_id, product_id)
+    VALUES (${cart.id}, ${productId})
+    ON CONFLICT (cart_id, product_id) DO NOTHING
+  `;
+
+  return cart.id;
+}
+
+/**
+ * Removes an item from the cart
+ */
+export async function removeItemFromCart(cartId: MaybeCartId, itemId: string) {
+  if (!cartId) {
+    return;
+  }
+
+  // Delete the item from the cart
+  await sql`DELETE FROM cart_items WHERE id = ${itemId} AND cart_id = ${cartId}`;
 }

@@ -1,6 +1,10 @@
-import { Link, useLoaderData } from "react-router";
+import { data, Link, redirect, useLoaderData } from "react-router";
 import { performCheckout } from "~/lib/checkout.server";
 import { getCartWithItems } from "../lib/cart.server";
+import {
+  getCartIdFromSession,
+  setCartIdInSession,
+} from "../lib/session.server";
 import type { Route } from "./+types/checkout";
 
 export function meta({}: Route.MetaArgs) {
@@ -10,15 +14,27 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export async function loader({}: Route.LoaderArgs) {
-  // Get the cart with all items and product details
-  const cart = await getCartWithItems();
+export async function loader({ request }: Route.LoaderArgs) {
+  // Get cart ID from session or create a new cart
+  const cartId = await getCartIdFromSession(request);
+  const headers = new Headers();
 
-  return {
-    cartId: cart.id,
-    items: cart.items,
-    totalPrice: cart.totalPrice,
-  };
+  // Get the cart with all items and product details
+  const cart = await getCartWithItems(cartId);
+
+  // If we didn't have a cart ID or it changed, update the session
+  if (!cartId || cartId !== cart.id) {
+    headers.set("Set-Cookie", await setCartIdInSession(request, cart.id));
+  }
+
+  return data(
+    {
+      cartId: cart.id,
+      items: cart.items,
+      totalPrice: cart.totalPrice,
+    },
+    { headers },
+  );
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -26,11 +42,25 @@ export async function action({ request }: Route.ActionArgs) {
   const intent = formData.get("intent");
 
   if (intent === "complete") {
+    // Get cart ID from session
+    const cartId = await getCartIdFromSession(request);
+
+    if (!cartId) {
+      return redirect("/products");
+    }
+
     // In a real app, we would process payment here
-    const { orderId } = await performCheckout();
-    return { success: true, orderId };
+    const { orderId } = await performCheckout(cartId);
+
+    // Clear cart from session after successful checkout
+    const session = await getCartIdFromSession(request);
+    const headers = {
+      "Set-Cookie": await setCartIdInSession(request, null),
+    };
+
+    return data({ success: true, orderId }, { headers });
   } else {
-    return { success: false };
+    return data({ success: false });
   }
 }
 

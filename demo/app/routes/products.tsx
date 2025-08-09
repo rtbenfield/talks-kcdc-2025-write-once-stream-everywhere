@@ -1,11 +1,15 @@
-import { Link, useLoaderData } from "react-router";
-import type { Route } from "./+types/products";
+import { data, Link, useLoaderData } from "react-router";
 import productsData from "../data/products.json";
-import type { Product } from "../types";
 import { getCartWithItems } from "../lib/cart.server";
+import {
+  getCartIdFromSession,
+  setCartIdInSession,
+} from "../lib/session.server";
+import type { Product } from "../types";
+import type { Route } from "./+types/products";
 
 // Type assertion for our static JSON data
-const typedProductsData: { products: Product[] } = productsData as any;
+const { products } = productsData satisfies { products: Product[] };
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -14,28 +18,43 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export async function loader({}: Route.LoaderArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
+  // Get cart ID from session or create a new cart
+  const cartId = await getCartIdFromSession(request);
+  const headers = new Headers();
+
   // Get cart with items
-  const cart = await getCartWithItems();
-  
+  const cart = await getCartWithItems(cartId);
+
+  // If we didn't have a cart ID or it changed, update the session
+  if (!cartId || cartId !== cart.id) {
+    headers.set("Set-Cookie", await setCartIdInSession(request, cart.id));
+  }
+
   // Get product IDs in cart for disabling buttons
-  const productsInCart = cart.items.map(item => item.productId);
-  
-  return { 
-    products: productsData.products,
-    cartItemCount: cart.items.length,
-    productsInCart
-  };
+  const productsInCart = cart.items.map((item) => item.productId);
+
+  return data(
+    {
+      products,
+      cartItemCount: cart.items.length,
+      productsInCart,
+    },
+    { headers },
+  );
 }
 
 export default function Products() {
-  const { products, cartItemCount, productsInCart } = useLoaderData<typeof loader>();
+  const { products, cartItemCount, productsInCart } =
+    useLoaderData<typeof loader>();
 
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Products</h1>
-        <Link 
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+          Products
+        </h1>
+        <Link
           to="/cart"
           className="flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
         >
@@ -54,8 +73,12 @@ export default function Products() {
             key={product.id}
             className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow bg-white dark:bg-gray-800"
           >
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{product.name}</h2>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">{product.description}</p>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+              {product.name}
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
+              {product.description}
+            </p>
             <div className="mt-4 flex justify-between items-center">
               <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
                 ${product.price.toFixed(2)}
