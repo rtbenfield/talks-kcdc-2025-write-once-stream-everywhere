@@ -167,7 +167,7 @@ layout: two-cols
 <img class="rounded-full align-middle" alt="Tyler Benfield headshot in front of snow covered alps" src="/me.webp" />
 
 ---
-layout: cover
+layout: two-cols
 ---
 
 # Our Agenda
@@ -182,6 +182,10 @@ layout: cover
 
 - Wrap-up with **outcomes**
 
+::right::
+
+![https://github.com/rtbenfield/talks-kcdc-2025-write-once-stream-everywhere](/repo-qr.png)
+
 ---
 layout: section
 ---
@@ -191,6 +195,8 @@ layout: section
 ---
 
 <h1> <tabler:trophy /> Pillars of Eventuality</h1>
+
+A framework for comparing event-driven architectures.
 
 <div class="flex flex-row gap-8 w-full mt-24">
 
