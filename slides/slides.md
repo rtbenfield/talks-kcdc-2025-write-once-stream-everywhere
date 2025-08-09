@@ -167,24 +167,30 @@ layout: two-cols
 <img class="rounded-full align-middle" alt="Tyler Benfield headshot in front of snow covered alps" src="/me.webp" />
 
 ---
+layout: cover
+---
 
 # Our Agenda
 
-- **Event-Driven Architectures**
-- **Change Data Capture** with Postgres
-- **Demo**
-- **Tools to Get Started**
-- **Wrap-up and Takeaways**
+- Talk **event-driven architectures**
+
+- Explore **Change Data Capture** with Postgres
+
+- Risk a **live demo**
+
+- **Deep dive** into protocols
+
+- Wrap-up with **outcomes**
 
 ---
-layout: cover
+layout: section
 ---
 
 <h1> <tabler:bolt /> Event-Driven Architectures</h1>
 
 ---
 
-<h1> <tabler:trophy /> Gold Standard</h1>
+<h1> <tabler:trophy /> Pillars of Eventuality</h1>
 
 <div class="flex flex-row gap-8 w-full mt-24">
 
@@ -213,6 +219,8 @@ Always-active connection.
 Events match state.
 
 Events always trigger.
+
+Critical data is available immediately.
 
 </v-click>
 
@@ -384,7 +392,7 @@ flowchart TD
 
 ---
 
-<h1> <tabler:trophy-off /> Dual Write is not the Gold Standard</h1>
+<h1> <tabler:trophy-off /> Dual Write </h1>
 
 <div class="flex flex-row gap-8 w-full mt-24">
 
@@ -423,12 +431,14 @@ Clients can recover from the message queue, though database write failures canno
 </div>
 
 ---
-layout: two-cols
+layout: two-cols-header
 ---
 
-<h1> <tabler:hourglass /> Write first, read eventually</h1>
+<h1> <tabler:hourglass /> Write First, Read Eventually</h1>
 
 The event-driven architecture dream.
+
+::left::
 
 - Write to a message queue first, then commit to the database in a queue processor.
 
@@ -462,7 +472,7 @@ layout: two-cols-header
 title: Write First, Read Eventually - Example
 ---
 
-<h1> <tabler:hourglass /> Write first, read eventually</h1>
+<h1> <tabler:hourglass /> Write First, Read Eventually</h1>
 
 ::left::
 
@@ -505,10 +515,12 @@ Left side becomes consistent with only one direct outcome: the message.
 -->
 
 ---
-layout: two-cols
+layout: two-cols-header
 ---
 
-<h1> <tabler:hourglass /> Write first, read eventually</h1>
+<h1> <tabler:hourglass /> Write First, Read Eventually</h1>
+
+::left::
 
 ### **What if the queue processor fails?**
 
@@ -543,7 +555,7 @@ flowchart TD
 
 ---
 
-<h1> <tabler:trophy-off /> Write First, Read Eventually is not the Gold Standard</h1>
+<h1> <tabler:trophy-off /> Write First, Read Eventually </h1>
 
 <div class="flex flex-row gap-8 w-full mt-24">
 
@@ -558,6 +570,8 @@ Changes through the message queue are pushed to the application, though the data
 <section class="border-t-12 grow basis-1 pt-2">
 
 ## ~~Consistent~~
+
+Critical data is _eventually consistent_.
 
 A failure to process a message would cause the database to be incorrect.
 
@@ -925,10 +939,10 @@ Data change notification callbacks.
 </div>
 
 ---
-layout: cover
+layout: section
 ---
 
-# Postgres CDC
+<h1> <tabler:database /> Postgres CDC</h1>
 
 Change Data Capture using Logical Replication
 
@@ -971,9 +985,9 @@ A definition of tables to make available for logical replication.
 <v-click>
 <section>
 
-## Logical Replication
+## Replication Slot
 
-The concept of replicating a database by tracking changes in the form of individual record modification.
+An instance of a replication consumer that should be tracked by the primary to retain changes.
 
 </section>
 </v-click>
@@ -981,9 +995,9 @@ The concept of replicating a database by tracking changes in the form of individ
 <v-click>
 <section>
 
-## Replication Slot
+## Logical Replication
 
-An instance of a replication consumer that should be tracked by the primary to retain changes.
+The concept of replicating a database by tracking changes in the form of individual record modification.
 
 </section>
 </v-click>
@@ -1011,6 +1025,14 @@ The concept of replicating a database by copying blocks of data that have been m
 - The WAL can be used in logical replication to stream changes to a standby server.
 
 - The WAL is server-level, not database level, so changes to other databases will increase the WAL file position.
+
+<!--
+The WAL is really an audit log of every conceptual change that has taken place.
+
+It encodes a logical description of the changes, but not the underlying bytes.
+
+This makes it useful for creative use cases like CDC.
+-->
 
 ---
 layout: two-cols
@@ -1094,93 +1116,73 @@ layout: two-cols-header
 
 - Our application will need to understand encoding of WAL events.
 
----
+<!--
+Applications can pretend to be a database replica.
 
-<h1> <tabler:terminal /> Commands</h1>
+Logical replication is ideal for this because it provides the application with conceptual changes rather than byte-level changes.
 
-```sql
--- Create a publication that tracks all database tables.
--- It’s possible to list specific tables here instead.
-CREATE PUBLICATION "my_publication" FOR ALL TABLES;
-
--- Create the replication slot.
--- ! This will cause the database to start preserving WAL until the slot is active.
-SELECT * FROM pg_create_logical_replication_slot(
-  'my_replication_slot', -- slot name
-  'pgoutput' -- encoding plugin name
-);
-
--- Query information about the existing replication slots.
-SELECT *, pg_current_wal_lsn() FROM "pg_replication_slots";
-```
+Conceptual changes allow the application to process events without retaining a full copy of the database, diffing it, or other complex behavior.
+-->
 
 ---
-
-<h1> <tabler:terminal /> Commands</h1>
-
-```sql
--- Start streaming changes over the active connection.
--- Only works on a connection established as a replication connection.
-START_REPLICATION SLOT "my_replication_slot" LOGICAL 0/0 (
-  -- These are args to the encoding plugin used by the slot (pgoutput in this case).
-  proto_version '1', -- pgoutput protocol version
-  publication_names 'my_publication' -- publications to subscribe to
-);
-
--- OR poll for new changes on a regular connection.
-SELECT * FROM pg_logical_slot_peek_changes(
-  'my_replication_slot', -- slot name
-  NULL, -- starting LSN or NULL to resume from last position
-  NULL, -- number of changes to retrieve, NULL to read to end
-  'include-timestamps', 'on'  -- include transaction timestamp in results
-);
-```
-
+layout: section
 ---
 
-<h1> <tabler:terminal /> Commands</h1>
-
-```sql
--- Advance the replication slot by acknowledging an LSN.
--- This allows Postgres to purge older WAL data.
-SELECT * FROM pg_replication_slot_advance(
-  'my_replication_slot', -- slot name
-  '0/1A0A160' -- last LSN consumed
-);
-
--- Drop the replication slot.
--- A replication slot with an active connection cannot be dropped!
-SELECT * FROM pg_drop_replication_slot('my_replication_slot');
-
--- Drop the publication.
-DROP PUBLICATION "my_replication_slot";
-```
+<h1> <tabler:device-projector /> Demo </h1>
 
 ---
-layout: center
+title: Demo | Example App Outline
 ---
 
-# Let's code
+<h1> <tabler:device-projector /> Example App </h1>
+
+A simple online shop example.
+
+Commerce is full of side effects that are perfect for an event-driven architecture.
+
+- Customer emails
+- Payment status updates
+- Order fulfillment
+- Inventory changes
+- Refunds
+
+Many of these are accompanied with changes in data.
+
+- Item added to cart
+- Order confirmed
+- Account created
 
 ---
-layout: cover
+title: Demo | Example App Side Effects
 ---
 
-# What next?
+<h1> <tabler:device-projector /> Example App </h1>
+
+A simple online shop example.
+
+### Our example side effects
+
+- When a user adds an item to their cart we'll schedule an abandoned cart email.
+
+- When a user checks out, we'll cancel their abandoned cart email.
+
+- When an order is placed, we'll send the user an order confirmation.
+
+- When an order is placed, we'll process the order fulfillment.
 
 ---
 layout: two-cols
 ---
 
-# Off-the-shelf option
+# Debezium
 
 Debezium is a prebuilt solution for deploying change data capture in your application.
 
 - Open source, self-hosted solution for capturing database changes.
 
-- Supports a variety of databases including PostgreSQL, MySQL, MariaDB, and MongoDB.
+- Supports a variety of databases including Postgres, MySQL, MariaDB, and MongoDB.
 
-- Paired with a message queue for durability and delivery to applications.
+- Pair with a message queue for durability and delivery to applications.
 
 - Free to host yourself.
 
@@ -1196,9 +1198,9 @@ flowchart TD
   APP2(fa:fa-user Application)
   DBZ(fa:fa-server Debezium)
 
-  APP --> WRITE --> DB
-  DB --> READ --> APP2
-  DB --> DBZ --> PUSH --> APP2
+APP --> WRITE --> DB
+DB --> READ --> APP2
+DB --> DBZ --> PUSH --> APP2
 ```
 
 ---
@@ -1209,7 +1211,7 @@ Deploy Debezium directly within a Kafka cluster.
 
 <figure>
 
-![Debezium with Kafka Connect](/debezium-kafka.png)
+![Debezium with Kafka Connect](https://debezium.io/documentation/reference/stable/_images/debezium-architecture.png)
 
 <figcaption class="text-center text-sm">Image sourced from <a href="https://debezium.io/documentation/reference/stable/architecture.html">Debezium documentation</a></figcaption>
 </figure>
@@ -1244,10 +1246,14 @@ Deploy Debezium as a standalone service in your infrastructure.
 
 <figure>
 
-![Debezium Server](/debezium-server.png)
+![Debezium Server](https://debezium.io/documentation/reference/stable/_images/debezium-server-architecture.png)
 
 <figcaption class="text-center text-sm">Image sourced from <a href="https://debezium.io/documentation/reference/stable/architecture.html">Debezium documentation</a></figcaption>
 </figure>
+
+<!--
+Be sure to keep Debezium Server healthy or it will cause a WAL backlog.
+-->
 
 ---
 layout: two-cols-header
@@ -1259,15 +1265,155 @@ Deploy Debezium within a Java application.
 
 ::left::
 
-- Java library that can be embedded in a Java application for custom behavior.
+- Java library that can be embedded in an application for custom behavior.
 
 - Application is responsible for event delivery and durable storage of events, if needed.
 
 - Ensure the application can handle the throughput of database events!
 
+::right::
+
+```java
+try (DebeziumEngine<ChangeEvent<String, String>> engine =
+  DebeziumEngine.create(Json.class)
+    .using(props)
+    .notifying(record -> {
+      // do something cool with the event here
+      System.out.println(record);
+    }).build()
+) {
+  ExecutorService executor = Executors.newSingleThreadExecutor();
+  executor.execute(engine);
+}
+```
+
+<!--
+Failure to keep up with event volume will cause a WAL backlog on the database.
+
+The WAL will eventually reach a configured limit for the replication slot or consume all disk space.
+-->
+
+---
+layout: image
+image: https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExZGd5YWtwZjlvb29wb3BzNWJmaXdzajU5NjgycGx3bHExczU0dnBkYSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l0HUcbFpqSIqOeq0E/giphy.gif
 ---
 
-<h1> <tabler:trophy /> Gold Standard</h1>
+# Demo time!
+
+---
+layout: two-cols-header
+---
+
+<h1> <tabler:alert-hexagon /> Caution </h1>
+
+CDC requires attentive monitoring.
+
+::left::
+
+- **Postgres** will retain WAL data up to the oldest LSN needed by a replication slot unless configured with a limit, up to the point of consuming all disk space.
+
+- **MySQL** / **MariDB** will retain a configured binlog size regardless of replication consumers.
+
+::right::
+
+```sql
+SELECT
+  slot_name,
+  pg_size_pretty( -- human readable bytes
+    pg_wal_lsn_diff( -- compute difference between two LSNs
+      pg_current_wal_lsn(), -- current server LSN
+      restart_lsn -- last acknowledged LSN
+    )
+  ) AS retained_wal_size
+FROM pg_replication_slots
+WHERE slot_name = 'your_slot_name';
+```
+
+<!--
+CDC can recover from short-term failure, but should not be left unhealthy for a long time.
+
+WAL is server level, not database level. Other activity can impact WAL retention.
+
+CDC consumer should acknowledge heartbeats to prevent WAL backlog from other server activity.
+-->
+
+---
+hide: true
+---
+
+<h1> <tabler:terminal /> Commands</h1>
+
+```sql
+-- Create a publication that tracks all database tables.
+-- It’s possible to list specific tables here instead.
+CREATE PUBLICATION "my_publication" FOR ALL TABLES;
+
+-- Create the replication slot.
+-- ! This will cause the database to start preserving WAL until the slot is active.
+SELECT * FROM pg_create_logical_replication_slot(
+  'my_replication_slot', -- slot name
+  'pgoutput' -- encoding plugin name
+);
+
+-- Query information about the existing replication slots.
+SELECT *, pg_current_wal_lsn() FROM "pg_replication_slots";
+```
+
+---
+hide: true
+---
+
+<h1> <tabler:terminal /> Commands</h1>
+
+```sql
+-- Start streaming changes over the active connection.
+-- Only works on a connection established as a replication connection.
+START_REPLICATION SLOT "my_replication_slot" LOGICAL 0/0 (
+  -- These are args to the encoding plugin used by the slot (pgoutput in this case).
+  proto_version '1', -- pgoutput protocol version
+  publication_names 'my_publication' -- publications to subscribe to
+);
+
+-- OR poll for new changes on a regular connection.
+SELECT * FROM pg_logical_slot_peek_changes(
+  'my_replication_slot', -- slot name
+  NULL, -- starting LSN or NULL to resume from last position
+  NULL, -- number of changes to retrieve, NULL to read to end
+  'include-timestamps', 'on'  -- include transaction timestamp in results
+);
+```
+
+---
+hide: true
+---
+
+<h1> <tabler:terminal /> Commands</h1>
+
+```sql
+-- Advance the replication slot by acknowledging an LSN.
+-- This allows Postgres to purge older WAL data.
+SELECT * FROM pg_replication_slot_advance(
+  'my_replication_slot', -- slot name
+  '0/1A0A160' -- last LSN consumed
+);
+
+-- Drop the replication slot.
+-- A replication slot with an active connection cannot be dropped!
+SELECT * FROM pg_drop_replication_slot('my_replication_slot');
+
+-- Drop the publication.
+DROP PUBLICATION "my_replication_slot";
+```
+
+---
+layout: section
+---
+
+<h1> <tabler:player-skip-forward /> Wrapping up </h1>
+
+---
+
+<h1> <tabler:trophy /> Pillars of Eventuality</h1>
 
 <div class="flex flex-row gap-8 w-full mt-24">
 
@@ -1290,6 +1436,8 @@ Always-active connection.
 Events match state.
 
 Events always trigger.
+
+Critical data is available immediately.
 
 </section>
 
@@ -1316,15 +1464,13 @@ Failed events can retry.
 </div>
 
 ---
-
 layout: cover
 background: /cover-end.png
 title: End
 class: text-center
-
 ---
 
-# Build something epic
+<h1>Always COMMIT and <br/> never ROLLBACK</h1>
 
 ## Tyler Benfield
 
