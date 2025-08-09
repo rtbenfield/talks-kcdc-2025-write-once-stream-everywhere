@@ -136,3 +136,29 @@ export async function removeItemFromCart(cartId: MaybeCartId, itemId: string) {
   // Delete the item from the cart
   await sql`DELETE FROM cart_items WHERE id = ${itemId} AND cart_id = ${cartId}`;
 }
+
+/**
+ * Adds multiple items to the cart at once
+ * Useful for adding bundles or collections of products
+ */
+export async function addMultipleItemsToCart(
+  cartId: MaybeCartId,
+  productIds: number[],
+) {
+  // Get or create a cart
+  const cart = await getOrCreateCart(cartId);
+
+  // Bulk insert cart items using postgres-js dynamic inserts
+  const inserts = productIds.map((id) => {
+    return { cart_id: cart.id, product_id: id };
+  });
+  await sql`
+    INSERT INTO cart_items
+    ${sql(inserts)}
+    ON CONFLICT (cart_id, product_id) DO NOTHING
+  `;
+
+  // FIXME: we forgot side effects here
+
+  return cart.id;
+}

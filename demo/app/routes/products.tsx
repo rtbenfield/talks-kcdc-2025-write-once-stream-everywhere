@@ -1,6 +1,10 @@
 import { data, Link, redirect, useLoaderData } from "react-router";
 import productsData from "../data/products.json";
-import { addItemToCart, getCartWithItems } from "../lib/cart.server";
+import {
+  addItemToCart,
+  addMultipleItemsToCart,
+  getCartWithItems,
+} from "../lib/cart.server";
 import {
   getCartIdFromSession,
   setCartIdInSession,
@@ -23,17 +27,28 @@ export async function action({ request }: Route.ActionArgs) {
   const intent = formData.get("intent");
   const headers = new Headers();
 
+  // Get cart ID from session
+  const cartId = await getCartIdFromSession(request);
+
   if (intent === "add") {
     const productId = Number(formData.get("productId"));
-
-    // Get cart ID from session
-    const cartId = await getCartIdFromSession(request);
 
     // Add item to cart and get the cart ID
     const newCartId = await addItemToCart(cartId, productId);
 
     // Set cookie header for the redirect
     headers.set("Set-Cookie", await setCartIdInSession(request, newCartId));
+  } else if (intent === "add-bundle") {
+    const bundleItems = formData.get("bundleItems");
+    if (bundleItems) {
+      const productIds = bundleItems.toString().split(",").map(Number);
+
+      // Add multiple items to cart and get the cart ID
+      const newCartId = await addMultipleItemsToCart(cartId, productIds);
+
+      // Set cookie header for the redirect
+      headers.set("Set-Cookie", await setCartIdInSession(request, newCartId));
+    }
   }
 
   return redirect("/products", { headers });
@@ -65,9 +80,33 @@ export async function loader({ request }: Route.LoaderArgs) {
   );
 }
 
+// Define our bundle products - Keyboard, Mouse, and Laptop Stand
+const BUNDLE_PRODUCT_IDS = [1, 2, 8];
+
 export default function Products() {
   const { products, cartItemCount, productsInCart } =
     useLoaderData<typeof loader>();
+
+  // Get the bundle products
+  const bundleProducts = products.filter((product) =>
+    BUNDLE_PRODUCT_IDS.includes(product.id),
+  );
+
+  // Calculate bundle total price
+  const bundleTotalPrice = bundleProducts.reduce(
+    (sum, product) => sum + product.price,
+    0,
+  );
+
+  // Check if all bundle products are already in cart
+  const allBundleItemsInCart = BUNDLE_PRODUCT_IDS.every((id) =>
+    productsInCart.includes(id),
+  );
+  
+  // Count how many bundle items are already in cart
+  const bundleItemsInCartCount = BUNDLE_PRODUCT_IDS.filter((id) =>
+    productsInCart.includes(id),
+  ).length;
 
   return (
     <div className="container mx-auto p-4">
@@ -87,6 +126,72 @@ export default function Products() {
           )}
         </Link>
       </div>
+
+      {/* Suggested Bundle Section - only show if not all items are in cart */}
+      {!allBundleItemsInCart && (
+        <div className="mb-10 p-6 border-2 border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50 dark:bg-blue-900/30">
+        <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
+          Suggested Bundle: Workstation Essentials
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          {bundleProducts.map((product) => (
+            <div
+              key={product.id}
+              className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm bg-white dark:bg-gray-800"
+            >
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                {product.name}
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mt-2">
+                {product.description}
+              </p>
+              <div className="mt-4">
+                <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  ${product.price.toFixed(2)}
+                </span>
+                {productsInCart.includes(product.id) && (
+                  <span className="ml-3 text-sm bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 px-2 py-1 rounded">
+                    In Cart
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-col md:flex-row justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+          <div>
+            <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              Bundle Price:{" "}
+              <span className="text-xl">${bundleTotalPrice.toFixed(2)}</span>
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Get all three items for your perfect workstation setup!
+            </p>
+          </div>
+          <form method="post" className="mt-4 md:mt-0">
+            <input
+              type="hidden"
+              name="bundleItems"
+              value={BUNDLE_PRODUCT_IDS.join(",")}
+            />
+            <input type="hidden" name="intent" value="add-bundle" />
+            <button
+              type="submit"
+              disabled={allBundleItemsInCart}
+              className={`px-6 py-2 rounded-lg font-medium ${
+                allBundleItemsInCart
+                  ? "bg-gray-400 cursor-not-allowed text-white"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
+              }`}
+            >
+              {bundleItemsInCartCount > 0
+                ? `Add ${BUNDLE_PRODUCT_IDS.length - bundleItemsInCartCount} Remaining Items`
+                : "Add Bundle to Cart"}
+            </button>
+          </form>
+        </div>
+      </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {products.map((product) => (
