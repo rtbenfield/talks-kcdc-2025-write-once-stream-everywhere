@@ -1,6 +1,8 @@
 import productsData from "../data/products.json";
 import type { Cart, CartItem, Product } from "../types";
+import { ENABLE_SIDE_EFFECTS } from "./config";
 import { sql } from "./db.server";
+import { scheduledAbandonedCartEmail } from "./emails.server";
 
 type MaybeCartId = number | null | undefined;
 
@@ -113,6 +115,12 @@ export async function addItemToCart(cartId: MaybeCartId, productId: number) {
     VALUES (${cart.id}, ${productId})
     ON CONFLICT (cart_id, product_id) DO NOTHING
   `;
+
+  if (ENABLE_SIDE_EFFECTS) {
+    // schedule an abandoned cart email for this cart if the user does not check out
+    // FIXME: what happens if scheduling the email fails?
+    await scheduledAbandonedCartEmail(cart.id);
+  }
 
   return cart.id;
 }

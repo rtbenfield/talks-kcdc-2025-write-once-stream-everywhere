@@ -1,12 +1,20 @@
 import productsData from "../data/products.json";
 import type { Product } from "../types";
+import { ENABLE_SIDE_EFFECTS } from "./config";
 import { sql } from "./db.server";
+import {
+  cancelAbandonedCartEmail,
+  sendOrderConfirmationEmail,
+} from "./emails.server";
 
+/**
+ * Performs a checkout by creating an order and clearing the cart.
+ */
 export async function performCheckout(cartId: number) {
   // Type assertion for our static JSON data
   const { products } = productsData satisfies { products: Product[] };
 
-  return sql.begin(async (tx) => {
+  const { orderId } = await sql.begin(async (tx) => {
     // Retrieve and lock cart items
     const cartItems = await tx<{ product_id: number }[]>`
       SELECT product_id
@@ -36,4 +44,14 @@ export async function performCheckout(cartId: number) {
 
     return { orderId };
   });
+
+  if (ENABLE_SIDE_EFFECTS) {
+    // FIXME: what happens to our checkout if the email fails?
+    await sendOrderConfirmationEmail(orderId);
+
+    // FIXME: what happens if email cancelation fails?
+    await cancelAbandonedCartEmail(cartId);
+  }
+
+  return { orderId };
 }

@@ -1,4 +1,9 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import {
+  cancelAbandonedCartEmail,
+  scheduledAbandonedCartEmail,
+  sendOrderConfirmationEmail,
+} from "~/lib/emails.server";
 
 interface DebeziumEvent {
   /**
@@ -46,6 +51,7 @@ export async function loader({}: LoaderFunctionArgs) {
  * Endpoint to receive and log data from Debezium.
  */
 export async function action({ request }: ActionFunctionArgs) {
+  // REVIEW: endpoint to receive Debezium events
   const data: DebeziumEvent = await request.json();
 
   console.info(
@@ -55,5 +61,47 @@ export async function action({ request }: ActionFunctionArgs) {
     data.payload.op === "d" ? data.payload.before : data.payload.after,
   );
 
+  try {
+    // TODO: enable Debezium event handling
+    // await eventRouter(data);
+  } catch (error) {
+    // simplify the error message to reduce the noisy logs
+    console.error("[DEBEZIUM] Error processing event", String(error));
+    return new Response("Error processing event", { status: 500 });
+  }
+
   return new Response("OK");
+}
+
+async function eventRouter(event: DebeziumEvent) {
+  const idempotentId = event.payload.source.lsn.toString();
+  switch (event.payload.source.table) {
+    case "carts":
+      switch (event.payload.op) {
+        case "d":
+          // cart was deleted
+          // cancel any scheduled abandoned cart emails
+          const cartId = event.payload.before!["id"] as number;
+          await cancelAbandonedCartEmail(cartId, idempotentId);
+          return;
+      }
+    case "cart_items":
+      switch (event.payload.op) {
+        case "c":
+          // cart item was created
+          // schedule an abandoned cart email
+          const cartId = event.payload.after!["cart_id"] as number;
+          await scheduledAbandonedCartEmail(cartId, idempotentId);
+          return;
+      }
+    case "orders":
+      switch (event.payload.op) {
+        case "c":
+          // order was created
+          // send an order confirmation email
+          const orderId = event.payload.after!["id"] as number;
+          await sendOrderConfirmationEmail(orderId, idempotentId);
+          return;
+      }
+  }
 }
