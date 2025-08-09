@@ -1,4 +1,5 @@
 import { data, Link, redirect, useLoaderData } from "react-router";
+import { currency } from "~/lib/formatters";
 import {
   addItemToCart,
   getCartWithItems,
@@ -146,7 +147,7 @@ export default function Cart() {
                       </div>
                     </td>
                     <td className="p-4 text-right text-gray-900 dark:text-gray-100">
-                      ${item.product.price.toFixed(2)}
+                      {currency.format(item.product.price)}
                     </td>
                     <td className="p-4 text-right">
                       <form method="post">
@@ -169,7 +170,7 @@ export default function Cart() {
                     Total
                   </td>
                   <td className="p-4 text-right font-bold text-gray-900 dark:text-gray-100">
-                    ${totalPrice.toFixed(2)}
+                    {currency.format(totalPrice)}
                   </td>
                   <td></td>
                 </tr>

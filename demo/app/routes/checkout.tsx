@@ -1,5 +1,6 @@
 import { data, Link, redirect, useLoaderData } from "react-router";
 import { performCheckout } from "~/lib/checkout.server";
+import { currency } from "~/lib/formatters";
 import { getCartWithItems } from "../lib/cart.server";
 import {
   getCartIdFromSession,
@@ -53,12 +54,12 @@ export async function action({ request }: Route.ActionArgs) {
     const { orderId } = await performCheckout(cartId);
 
     // Clear cart from session after successful checkout
-    const session = await getCartIdFromSession(request);
     const headers = {
       "Set-Cookie": await setCartIdInSession(request, null),
     };
 
-    return data({ success: true, orderId }, { headers });
+    // Redirect to the order confirmation page
+    return redirect(`/order/${orderId}`, { headers });
   } else {
     return data({ success: false });
   }
@@ -113,7 +114,7 @@ export default function Checkout() {
                     </p>
                   </div>
                   <span className="font-medium text-gray-900 dark:text-gray-100">
-                    ${item.product.price.toFixed(2)}
+                    {currency.format(item.product.price)}
                   </span>
                 </div>
               ))}
@@ -124,7 +125,7 @@ export default function Checkout() {
                 Total
               </span>
               <span className="font-bold text-lg text-gray-900 dark:text-gray-100">
-                ${totalPrice.toFixed(2)}
+                {currency.format(totalPrice)}
               </span>
             </div>
           </div>

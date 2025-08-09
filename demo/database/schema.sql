@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS "order_items" (
   "id" SERIAL PRIMARY KEY,
   "order_id" INTEGER REFERENCES orders(id),
   "product_id" INTEGER NOT NULL,
-  "price" DECIMAL NOT NULL,
+  "price" NUMERIC NOT NULL,
   "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   UNIQUE("order_id", "product_id")
