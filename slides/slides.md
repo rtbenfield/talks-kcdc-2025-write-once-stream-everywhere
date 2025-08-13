@@ -30,10 +30,6 @@ mdc: true
 
 ## Transforming Your Data into Events
 
-<!--
-The last comment block of each slide will be treated as slide notes. It will be visible and editable in Presenter Mode along with the slide. [Read more in the docs](https://sli.dev/guide/syntax.html#notes)
--->
-
 ---
 layout: two-cols-header
 ---
@@ -1306,6 +1302,13 @@ image: https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExZGd5YWtwZjlvb29wb3BzNWJ
 
 # Demo time!
 
+<!--
+1. Switch to screen share
+2. Share projected desktop to see it in presenter
+3. Show the app UI
+4. Navigate TODOs
+-->
+
 ---
 layout: two-cols-header
 ---
@@ -1468,6 +1471,12 @@ Failed events can retry.
 </section>
 
 </div>
+
+---
+layout: image
+image: /kcdc25_sponsorslide.jpeg
+title: KCDC 2025 sponsors
+---
 
 ---
 layout: cover
