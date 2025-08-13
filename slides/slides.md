@@ -1,19 +1,7 @@
 ---
-# You can also start simply with 'default'
 theme: default
-# random image from a curated Unsplash collection by Anthony
-# like them? see https://unsplash.com/collections/94734566/slidev
-# background: /cover.png
-# some information about your slides (markdown enabled)
 title: "Write Once, Stream Everywhere: Transforming Your Data into Events"
 author: Tyler Benfield
-info: |
-  ## Slidev Starter Template
-  Presentation slides for developers.
-
-  Learn more at [Sli.dev](https://sli.dev)
-# apply unocss classes to the current slide
-class: text-center
 # https://sli.dev/features/drawing
 drawings:
   persist: false
@@ -21,9 +9,9 @@ drawings:
 transition: slide-left
 # enable MDC Syntax: https://sli.dev/features/mdc
 mdc: true
-# open graph
-# seoMeta:
-#  ogImage: https://cover.sli.dev
+# apply unocss classes to the current slide
+class: text-center
+background: /cover.png
 ---
 
 # Write Once, Stream Everywhere
@@ -31,38 +19,66 @@ mdc: true
 ## Transforming Your Data into Events
 
 ---
-layout: two-cols-header
----
 
 # Why streaming?
 
-::left::
+Is this a technical exercise or a practical approach?
+
+<div class="grid grid-cols-2 gap-8">
+
+<v-clicks>
+
+<section>
 
 <h3> <tabler:activity /> Live updates</h3>
 
 UX expectations are always rising. Linear is an example of excellent UX differentiating a product.
 
+</section>
+
+<section>
+
 <h3> <tabler:users /> Collaboration</h3>
 
 Live collaboration is carving out its own space with dedicated solutions like PartyKit.
+
+</section>
+
+<section>
 
 <h3> <tabler:logs /> Audit logs</h3>
 
 Capturing an audit trail is critical for many businesses to meet compliance standards.
 
-::right::
+</section>
+
+<section>
 
 <h3> <tabler:arrow-ramp-right /> Side effect workflows</h3>
 
 Send a welcome email on user sign up, update a Stripe invoice when a customer changes email, etc.
 
+</section>
+
+<section>
+
 <h3> <tabler:bell-ringing /> Push notifications</h3>
 
 In-app and mobile notifications are table stakes for delivering updates (and the occasional marketing nudge).
 
+</section>
+
+<section>
+
 <h3> <tabler:cloud-up /> Synchronization</h3>
 
 Businesses operate on multiple systems that need to reflect accurate data.
+
+</section>
+
+</v-clicks>
+
+</div>
 
 ---
 layout: image-right
@@ -174,9 +190,7 @@ layout: two-cols
 
 - Risk a **live demo**
 
-- **Deep dive** into protocols
-
-- Wrap-up with **outcomes**
+- Wrap-up with a **recap**
 
 ::right::
 
