@@ -1321,7 +1321,7 @@ CDC requires attentive monitoring.
 
 - **Postgres** will retain WAL data up to the oldest LSN needed by a replication slot unless configured with a limit, up to the point of consuming all disk space.
 
-- **MySQL** / **MariDB** will retain a configured binlog size regardless of replication consumers.
+- **MySQL** / **MariaDB** will retain a configured binlog size regardless of replication consumers.
 
 ::right::
 
