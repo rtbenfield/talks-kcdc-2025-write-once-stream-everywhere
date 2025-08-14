@@ -23,8 +23,8 @@ export async function cancelAbandonedCartEmail(
   // imagine this canceling an email that was scheduled by scheduledAbandonedCartEmail
   // it would call to a third party service that managed the email schedule
 
-  // unfortunately, our third party is unreliable, and fails 25% of the time
-  const success = randomChance(0.25);
+  // unfortunately, our third party is unreliable, and fails 50% of the time
+  const success = randomChance(0.5);
 
   if (!success) {
     throw new EmailProviderError("Failed to cancel email");
@@ -40,8 +40,8 @@ export async function scheduledAbandonedCartEmail(
   // this function mocks the scheduling of an abandoned cart email
   // imagine we call to a third party service to schedule the email for 2-days from now
 
-  // unfortunately, our third party is unreliable, and fails 25% of the time
-  const success = randomChance(0.25);
+  // unfortunately, our third party is unreliable, and fails 50% of the time
+  const success = randomChance(0.5);
 
   if (!success) {
     throw new EmailProviderError("Failed to schedule email");
