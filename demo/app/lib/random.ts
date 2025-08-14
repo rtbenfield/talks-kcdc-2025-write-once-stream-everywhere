@@ -19,5 +19,5 @@ export function randomChance(failureRatio: number): boolean {
   const randomValue = buffer[0] / 255;
 
   // Return true if the random value is less than the failure ratio
-  return randomValue < failureRatio;
+  return randomValue > failureRatio;
 }
