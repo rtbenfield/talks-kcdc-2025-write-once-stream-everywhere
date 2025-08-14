@@ -64,7 +64,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   try {
     // TODO: 2. enable Debezium event handling
-    await eventRouter(data);
+    // await eventRouter(data);
   } catch (error) {
     // simplify the error message to reduce the noisy logs
     console.error("[DEBEZIUM] Error processing event", String(error));
