@@ -158,7 +158,7 @@ export async function addMultipleItemsToCart(
     ON CONFLICT (cart_id, product_id) DO NOTHING
   `;
 
-  // FIXME: 99. we forgot side effects here
+  // FIXME: 2. we forgot side effects here
 
   return cart.id;
 }

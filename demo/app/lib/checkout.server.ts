@@ -47,7 +47,7 @@ export async function performCheckout(cartId: number) {
   });
 
   if (ENABLE_SIDE_EFFECTS) {
-    // FIXME: 2. what happens if side effects in checkout fail?
+    // FIXME: 3. what happens if side effects in checkout fail?
     // what about Promise.all?
     // what about Promise.allSettled?
     // what about retries?
