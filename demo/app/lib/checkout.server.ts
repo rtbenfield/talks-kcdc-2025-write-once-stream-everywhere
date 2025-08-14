@@ -12,6 +12,8 @@ import { processOrderFulfillment } from "./fulfillment.server";
  * Performs a checkout by creating an order and clearing the cart.
  */
 export async function performCheckout(cartId: number) {
+  console.info("[performCheckout]", { cartId });
+
   // Type assertion for our static JSON data
   const { products } = productsData satisfies { products: Product[] };
 

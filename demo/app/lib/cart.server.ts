@@ -20,6 +20,8 @@ export async function getOrCreateCart(cartId: MaybeCartId) {
     }
   }
 
+  console.info("[getOrCreateCart] creating new cart");
+
   // If no cart found or no ID provided, create a new one
   const [cart] = await sql<
     { id: number }[]
@@ -106,6 +108,8 @@ export async function getCartWithItems(cartId: MaybeCartId): Promise<Cart> {
  * Adds an item to the cart or increments its quantity if it already exists
  */
 export async function addItemToCart(cartId: MaybeCartId, productId: number) {
+  console.info("[addItemToCart]", { cartId, productId });
+
   // Get or create a cart
   const cart = await getOrCreateCart(cartId);
 
@@ -145,6 +149,8 @@ export async function addMultipleItemsToCart(
   cartId: MaybeCartId,
   productIds: number[],
 ) {
+  console.info("[addMultipleItemsToCart]", { cartId, productIds });
+
   // Get or create a cart
   const cart = await getOrCreateCart(cartId);
 
